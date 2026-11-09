@@ -21,6 +21,8 @@
 
 #include <sec/tropic.h>
 #include <sys/rng_mock.h>
+#include <sys/rng.h>
+#include <sys/rng_use_flags.h>
 
 #ifndef TREZOR_EMULATOR
 #error "Mock RNG must not be compiled into a non-emulator build"
@@ -58,6 +60,17 @@ bool tropic_random_buffer(void* buffer, size_t length) {
   }
 
   rng_mock_fill(&random_stream, (uint8_t*)buffer, length);
+  return true;
+}
+
+#else
+
+bool tropic_random_buffer(void* buffer, size_t length) {
+  if (!tropic_session_start()) {
+    return false;
+  }
+  rng_fill_buffer(buffer, length);
+  rng_use_flag_set(RNG_TYPE_TROPIC);
   return true;
 }
 

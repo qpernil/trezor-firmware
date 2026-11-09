@@ -91,7 +91,7 @@ static mp_obj_t mod_trezorcrypto_random_shuffle(mp_obj_t data) {
 static MP_DEFINE_CONST_FUN_OBJ_1(mod_trezorcrypto_random_shuffle_obj,
                                  mod_trezorcrypto_random_shuffle);
 
-#ifdef TREZOR_EMULATOR
+#ifdef USE_INSECURE_PRNG
 
 #if USE_OPTIGA
 #include <sec/optiga.h>
@@ -127,7 +127,7 @@ static const mp_rom_map_elem_t mod_trezorcrypto_random_globals_table[] = {
      MP_ROM_PTR(&mod_trezorcrypto_random_bytes_obj)},
     {MP_ROM_QSTR(MP_QSTR_shuffle),
      MP_ROM_PTR(&mod_trezorcrypto_random_shuffle_obj)},
-#ifdef TREZOR_EMULATOR
+#ifdef USE_INSECURE_PRNG
     {MP_ROM_QSTR(MP_QSTR_reseed),
      MP_ROM_PTR(&mod_trezorcrypto_random_reseed_obj)},
 #endif

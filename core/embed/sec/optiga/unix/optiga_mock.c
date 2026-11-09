@@ -21,6 +21,8 @@
 
 #include <sec/optiga.h>
 #include <sys/rng_mock.h>
+#include <sys/rng.h>
+#include <sys/rng_use_flags.h>
 
 // Guard against this file ever being compiled into a bare-metal build.
 // These checks are intentionally duplicated across all mock RNGs to prevent
@@ -52,6 +54,14 @@ void optiga_random_reseed(uint32_t seed) {
 
 bool optiga_random_buffer(uint8_t* dest, size_t size) {
   rng_mock_fill(&random_stream, dest, size);
+  return true;
+}
+
+#else
+
+bool optiga_random_buffer(uint8_t* dest, size_t size) {
+  rng_fill_buffer(dest, size);
+  rng_use_flag_set(RNG_TYPE_OPTIGA);
   return true;
 }
 

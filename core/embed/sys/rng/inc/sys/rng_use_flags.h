@@ -41,13 +41,13 @@ typedef enum {
  */
 void rng_use_flags_clear(void);
 
-#ifndef TREZOR_EMULATOR
+#if !defined(TREZOR_EMULATOR) || defined(VIRTUAL_TREZOR_OS_RNG)
 /**
  * @brief Marks the specified RNG type as used.
  *
  * @note This function is intentionally unavailable in emulator builds. Code
- * using a PRNG must not call it; it may only be called by real TRNG
- * implementations in hardware builds.
+ * using a deterministic PRNG must not call it. The virtual worker records
+ * completed OS CSPRNG reads, not independent physical TRNGs.
  */
 void rng_use_flag_set(rng_type_t type);
 #endif

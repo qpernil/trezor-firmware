@@ -20,6 +20,7 @@
 #include <trezor_rtl.h>
 
 #include <sys/rng.h>
+#include <sys/rng_use_flags.h>
 #include <sys/rng_mock.h>
 
 #include "rand.h"
@@ -54,8 +55,21 @@ void rng_fill_buffer(void* buffer, size_t buffer_size) {
   rng_mock_fill(&random_stream, (uint8_t*)buffer, buffer_size);
 }
 
+#else
+
+void rng_fill_buffer(void* buffer, size_t buffer_size) {
+  static FILE* random_source = NULL;
+  if (random_source == NULL) {
+    random_source = fopen("/dev/urandom", "rb");
+  }
+  ensure(sectrue * (random_source != NULL), "fopen /dev/urandom failed");
+  ensure(sectrue * (fread(buffer, 1, buffer_size, random_source) == buffer_size),
+         "read /dev/urandom failed");
+  rng_use_flag_set(RNG_TYPE_MCU);
+}
+
+#endif  // USE_INSECURE_PRNG
+
 // Implements random_buffer() function declared in crypto/rand.h
 // as a wrapper for rng_fill_buffer().
 void random_buffer(uint8_t* buf, size_t len) { rng_fill_buffer(buf, len); }
-
-#endif  // USE_INSECURE_PRNG
