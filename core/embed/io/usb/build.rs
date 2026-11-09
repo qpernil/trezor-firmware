@@ -1,5 +1,10 @@
 use xbuild::{CLibrary, Result, bail_unsupported};
 
+fn virtual_trezor_source(name: &str) -> String {
+    println!("cargo:rerun-if-env-changed={name}");
+    std::env::var(name).unwrap_or_else(|_| panic!("missing {name}"))
+}
+
 pub fn def_module(lib: &mut CLibrary) -> Result<()> {
     lib.add_include("usb/inc");
 
@@ -22,7 +27,14 @@ pub fn def_module(lib: &mut CLibrary) -> Result<()> {
         lib.add_define("USE_USB_IFACE_VCP", Some("1"));
     }
 
-    if cfg!(feature = "emulator") {
+    if cfg!(feature = "emulator") && std::env::var_os("VIRTUAL_TREZOR_SUPERVISOR_USB").is_some() {
+        lib.add_define("VIRTUAL_TREZOR_SUPERVISOR_USB", Some("1"));
+        lib.add_include(virtual_trezor_source("VIRTUAL_TREZOR_SUPERVISOR_INCLUDE"));
+        lib.add_sources([
+            virtual_trezor_source("VIRTUAL_TREZOR_USB_SOURCE"),
+            "usb/usb_config.c".to_string(),
+        ]);
+    } else if cfg!(feature = "emulator") {
         lib.add_sources(["usb/unix/sock.c", "usb/unix/usb.c", "usb/usb_config.c"]);
     } else if cfg!(feature = "mcu_stm32") {
         lib.add_sources([

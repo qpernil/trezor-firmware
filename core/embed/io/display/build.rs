@@ -1,5 +1,14 @@
 use xbuild::{CLibrary, Result, bail_unsupported};
 
+fn virtual_trezor_headless() -> bool {
+    std::env::var_os("VIRTUAL_TREZOR_HEADLESS_DISPLAY").is_some()
+}
+
+fn virtual_trezor_source(name: &str) -> String {
+    println!("cargo:rerun-if-env-changed={name}");
+    std::env::var(name).unwrap_or_else(|_| panic!("missing {name}"))
+}
+
 pub fn def_module(lib: &mut CLibrary) -> Result<()> {
     lib.add_include("display/inc");
 
@@ -19,7 +28,9 @@ pub fn def_module(lib: &mut CLibrary) -> Result<()> {
         lib.add_define("FRAMEBUFFER", Some("1"));
     }
 
-    if cfg!(feature = "emulator") {
+    if cfg!(feature = "emulator") && virtual_trezor_headless() {
+        add_driver_virtual_trezor(lib)?;
+    } else if cfg!(feature = "emulator") {
         // The emulator reuses the emulated board's display configuration (panel,
         // framebuffer) but always builds the unix driver instead of the HW one.
         add_driver_unix(lib)?;
@@ -37,6 +48,24 @@ pub fn def_module(lib: &mut CLibrary) -> Result<()> {
         bail_unsupported!();
     }
 
+    Ok(())
+}
+
+fn add_driver_virtual_trezor(lib: &mut CLibrary) -> Result<()> {
+    if cfg!(feature = "display_panel_vg2864") {
+        set_panel_vg2864(lib);
+    } else {
+        bail_unsupported!();
+    }
+
+    lib.add_define("VIRTUAL_TREZOR_HEADLESS_DISPLAY", Some("1"));
+    lib.add_include(virtual_trezor_source("VIRTUAL_TREZOR_DISPLAY_INCLUDE"));
+    lib.add_include(virtual_trezor_source("VIRTUAL_TREZOR_DISPLAY_CONFIG_INCLUDE"));
+    lib.add_sources([
+        virtual_trezor_source("VIRTUAL_TREZOR_DISPLAY_SOURCE"),
+        virtual_trezor_source("VIRTUAL_TREZOR_DISPLAY_RESOURCES_SOURCE"),
+        virtual_trezor_source("VIRTUAL_TREZOR_DISPLAY_CONFIG_SOURCE"),
+    ]);
     Ok(())
 }
 

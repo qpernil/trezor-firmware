@@ -1,5 +1,17 @@
 use xbuild::{CLibrary, Result, bail_unsupported};
 
+fn link_virtual_trezor_library(variable: &str, name: &str) {
+    use std::path::Path;
+
+    println!("cargo:rerun-if-env-changed={variable}");
+    let library = std::env::var(variable).unwrap_or_else(|_| panic!("missing {variable}"));
+    let directory = Path::new(&library)
+        .parent()
+        .unwrap_or_else(|| panic!("{variable} has no parent directory"));
+    println!("cargo:rustc-link-search=native={}", directory.display());
+    println!("cargo:rustc-link-lib=dylib={name}");
+}
+
 fn main() -> Result<()> {
     xbuild::build_and_link("firmware", |lib| {
         lib.import_lib("io")?;
@@ -40,8 +52,21 @@ fn main() -> Result<()> {
             bail_unsupported!()
         }
 
+        if std::env::var_os("VIRTUAL_TREZOR_HEADLESS_DISPLAY").is_some() {
+            lib.add_define("VIRTUAL_TREZOR_HEADLESS_DISPLAY", Some("1"));
+        }
+
         Ok(())
-    })
+    })?;
+
+    if std::env::var_os("VIRTUAL_TREZOR_HEADLESS_DISPLAY").is_some() {
+        link_virtual_trezor_library("VIRTUAL_TREZOR_DISPLAY_LIBRARY", "display_backends");
+        println!("cargo:rustc-link-arg=-Wl,-rpath,$ORIGIN");
+    }
+    if std::env::var_os("VIRTUAL_TREZOR_SUPERVISOR_USB").is_some() {
+        link_virtual_trezor_library("VIRTUAL_TREZOR_WORKER_LIBRARY", "usb_gadget_worker");
+    }
+    Ok(())
 }
 
 fn embed_kernel_binary(lib: &mut CLibrary) -> Result<()> {

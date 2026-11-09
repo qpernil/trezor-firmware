@@ -159,8 +159,10 @@ fn add_stm32f4_bsp(lib: &mut CLibrary) -> Result<()> {
 fn add_emulator_bsp(lib: &mut xbuild::CLibrary) -> Result<()> {
     lib.add_source("bsp/unix/profile.c");
 
-    lib.import_external_lib("sdl3", true)?;
-    lib.import_external_lib("sdl3-image", true)?;
+    if std::env::var_os("VIRTUAL_TREZOR_HEADLESS_DISPLAY").is_none() {
+        lib.import_external_lib("sdl3", true)?;
+        lib.import_external_lib("sdl3-image", true)?;
+    }
 
     Ok(())
 }

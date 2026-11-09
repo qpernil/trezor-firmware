@@ -33,8 +33,12 @@
 #include <sys/applet.h>
 #endif
 
-#ifdef TREZOR_EMULATOR
+#if defined(TREZOR_EMULATOR) && !defined(VIRTUAL_TREZOR_HEADLESS_DISPLAY)
 #include <sys/unix/sdl_event.h>
+#endif
+
+#ifdef VIRTUAL_TREZOR_SUPERVISOR_USB
+void virtual_trezor_wait_for_interrupt(uint32_t deadline);
 #endif
 
 typedef struct {
@@ -229,7 +233,7 @@ void sysevents_poll(const sysevents_t *awaited, sysevents_t *signalled,
   }
 
   for (;;) {
-#ifdef TREZOR_EMULATOR
+#if defined(TREZOR_EMULATOR) && !defined(VIRTUAL_TREZOR_HEADLESS_DISPLAY)
     // Poll SDL events and dispatch them
     sdl_events_poll();
 #endif
@@ -287,8 +291,12 @@ void sysevents_poll(const sysevents_t *awaited, sysevents_t *signalled,
 
     if (!events_processed) {
 #ifdef TREZOR_EMULATOR
+#ifdef VIRTUAL_TREZOR_SUPERVISOR_USB
+      virtual_trezor_wait_for_interrupt(deadline);
+#else
       // Wait a bit to not consume 100% CPU
       systick_delay_ms(1);
+#endif
 #else
       // Wait for the next event
       __WFI();

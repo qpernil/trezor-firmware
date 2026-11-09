@@ -78,7 +78,9 @@
 #include <sec/mcu_attestation.h>
 #endif
 
+#ifndef VIRTUAL_TREZOR_HEADLESS_DISPLAY
 #include <SDL3/SDL.h>
+#endif
 
 #include "../../version.h"
 
@@ -131,6 +133,7 @@ static void drivers_init(void) {
 #endif
 }
 
+#ifndef VIRTUAL_TREZOR_HEADLESS_DISPLAY
 static uintptr_t throw_exit_exception_trampoline(uintptr_t code,
                                                  uintptr_t unused1,
                                                  uintptr_t unused2) {
@@ -176,6 +179,7 @@ static bool sdl_event_filter(void *userdata, SDL_Event *event) {
   }
   return true;
 }
+#endif
 
 // Can be used to get basic emulator properties before regularly starting it.
 // Needs to be called before it starts listening on UDP sockets in case there
@@ -246,8 +250,10 @@ int main(int argc, char **argv) {
     error_shutdown("Cannot start coreapp");
   }
 
+#ifndef VIRTUAL_TREZOR_HEADLESS_DISPLAY
   // Set SDL event filter to catch quit events
   SDL_SetEventFilter(sdl_event_filter, &coreapp);
+#endif
 
   // Run the coreapp task
   applet_run(&coreapp);
