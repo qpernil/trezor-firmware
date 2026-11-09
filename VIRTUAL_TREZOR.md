@@ -5,6 +5,11 @@ This fork is based on Trezor Core `2.13.0`, commit
 Trezor One `1.14.2` firmware. It supplies the firmware used by
 [qpernil/virtual-trezor](https://github.com/qpernil/virtual-trezor).
 
+The fork's `main` branch mirrors official upstream `main` without local changes.
+The `virtual-trezor` branch carries the integration commits on the selected
+release base. Fast-forwarding the mirror does not update the integration branch
+or the downstream submodule pin.
+
 The integration repository provides the Linux platform adapters, build scripts,
 profiles, and tests. Its submodule pins an exact commit of this fork. Builds
 consume committed source without applying or reverting patches.
@@ -30,7 +35,7 @@ The legacy integration replaces platform objects at link time. Safe 3 uses
 model `T3B1`; the Linux worker is not production-authenticated Trezor hardware.
 
 To update the base, import a selected official release from the read-only
-`upstream` remote, resolve and review the fork's changes, and validate them
+`upstream` remote into `virtual-trezor`, resolve and review our changes, and validate them
 through the integration repository before advancing its submodule pin. Keep
 upstream release tags unchanged. The local source of record is the standalone
 Mac checkout; lab checkouts consume published commits through Git.
